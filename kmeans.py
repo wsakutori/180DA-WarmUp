@@ -1,4 +1,4 @@
-# From OpenCV python samples
+# Libraries from OpenCV python samples
 
 #!/usr/bin/env python
 
@@ -16,11 +16,11 @@ from __future__ import print_function
 
 import numpy as np
 import cv2 as cv
-
-from gaussian_mix import make_gaussians
+import matplotlib.pyplot as plt 
+import sys
 
 def main():
-    cluster_n = 5
+    cluster_n = 3
     img_size = 512
 
     # generating bright palette
@@ -29,28 +29,38 @@ def main():
     colors[0,:,0] = np.arange(0, 180, 180.0/cluster_n)
     colors = cv.cvtColor(colors, cv.COLOR_HSV2BGR)[0]
 
+    cap = cv.VideoCapture(0)
+
     while True:
-        print('sampling distributions...')
-        points, _ = make_gaussians(cluster_n, img_size)
+        print('sampling webcam...')
 
+        # Capture frame-by-frame
+        _, img = cap.read()
+
+        pixel_values = img.reshape((-1,3))
+        pixel_values = np.float32(pixel_values)
+
+        #term_crit = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 100, 0.2)
         term_crit = (cv.TERM_CRITERIA_EPS, 30, 0.1)
-        _ret, labels, _centers = cv.kmeans(points, cluster_n, None, term_crit, 10, 0)
+        _, labels, (centers) = cv.kmeans(pixel_values, cluster_n, None, term_crit, 10, cv.KMEANS_RANDOM_CENTERS)
 
-        img = np.zeros((img_size, img_size, 3), np.uint8)
-        for (x, y), label in zip(np.int32(points), labels.ravel()):
-            c = list(map(int, colors[label]))
+        centers = np.uint8(centers)
 
-            cv.circle(img, (x, y), 1, c, -1)
+        seg_img = centers[labels.flatten()]
 
-        cv.imshow('kmeans', img)
-        ch = cv.waitKey(0)
-        if ch == 27:
-            break
+        seg_img = seg_img.reshape(img.shape)
+
+        labels = labels.reshape(img.shape[0], img.shape[1])
+
+        cv.imshow("seg_img", seg_img)
+        if cv.waitKey(1) == ord("q"):
+            break   
 
     print('Done')
-
+    # When everything done, release the capture
 
 if __name__ == '__main__':
     print(__doc__)
     main()
+    cap.release()
     cv.destroyAllWindows()
