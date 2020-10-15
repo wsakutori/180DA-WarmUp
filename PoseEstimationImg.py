@@ -26,7 +26,7 @@ elif MODE == "MPI" :
 
 # Read image
 #frame = cv2.imread(args.image_file)
-_, frame = cv2.VideoCapture(0).read()
+_, frame = cv2.VideoCapture(0).read() # Reading off webcam
 frameCopy = np.copy(frame)
 frameWidth = frame.shape[1]
 frameHeight = frame.shape[0]
